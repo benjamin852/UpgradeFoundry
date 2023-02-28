@@ -51,4 +51,21 @@ contract AMMV1 {
         require(totalPoolShares > 0, "activePool: Zero liquidity");
         _;
     }
+
+    /*** FUNCTIONS ***/
+
+    /**
+     * @notice send free tokens to msg.sender
+     * @param _tokenOneAmount amount of tokenOne to send
+     * @param _tokenTwoAmount amount of tokenTwo to send
+     */
+    function faucet(uint256 _tokenOneAmount, uint256 _tokenTwoAmount) external {
+        tokenOneBalance[msg.sender] =
+            tokenOneBalance[msg.sender] +
+            _tokenOneAmount;
+
+        tokenTwoBalance[msg.sender] =
+            tokenTwoBalance[msg.sender] +
+            _tokenTwoAmount;
+    }
 }
