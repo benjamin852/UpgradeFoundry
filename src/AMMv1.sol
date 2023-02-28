@@ -17,6 +17,9 @@ contract AMMV1 {
     //k=totalToken1 * totalToken2
     uint256 public k;
 
+    // six decimal places
+    uint256 public constant PRECISION = 1_000_000;
+
     //share holding of each provider
     mapping(address => uint256) public shares;
 
@@ -25,6 +28,11 @@ contract AMMV1 {
 
     //balance of user outside amm
     mapping(address => uint256) public tokenTwoBalance;
+
+    /*** ERRORS ***/
+    error InvalidShares(uint256 shareOne, uint256 shareTwo);
+
+    /*** MODIFIERS ***/
 
     //user must have enough balance
     modifier validAmountCheckTokenOne(uint256 _quantity) {
@@ -67,5 +75,47 @@ contract AMMV1 {
         tokenTwoBalance[msg.sender] =
             tokenTwoBalance[msg.sender] +
             _tokenTwoAmount;
+    }
+
+    /**
+     * Adding new liqudity to the pool
+     * @param _amountTokenOne amount of tokenOne to provide
+     * @param _amountTokenTwo amount of tokenTwo to provide
+     * @return newShares amount of shares issued for locking assets
+     */
+    function provideLiquidity(uint256 _amountTokenOne, uint256 _amountTokenTwo)
+        external
+        validAmountCheckTokenOne(_amountTokenOne)
+        validAmountCheckTokenTwo(_amountTokenTwo)
+        returns (uint256 newShares)
+    {
+        //Genesis liquidity gets 100 shares
+        if (totalPoolShares == 0) {
+            newShares = 100 * PRECISION;
+        } else {
+            uint256 shareOne = (totalPoolShares * _amountTokenOne) /
+                totalTokenOne;
+
+            uint256 shareTwo = (totalPoolShares * _amountTokenTwo) /
+                totalTokenTwo;
+
+            if (shareOne != shareTwo) revert InvalidShares(shareOne, shareTwo);
+            // require(shareOne == shareTwo, "AMMv1.provideLiquidity: ")
+        }
+        require(
+            newShares > 0,
+            "AMMv1.provideLiquidity: Insufficient assets provided"
+        );
+
+        tokenOneBalance[msg.sender] -= _amountTokenOne;
+        tokenTwoBalance[msg.sender] -= _amountTokenTwo;
+
+        totalTokenOne += _amountTokenOne;
+        totalTokenTwo += _amountTokenTwo;
+
+        k = totalTokenOne * totalTokenTwo;
+
+        totalPoolShares += newShares;
+        shares[msg.sender] += newShares;
     }
 }
