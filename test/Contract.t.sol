@@ -35,9 +35,19 @@ contract Faucet is Test, Setup {
     }
 }
 
-contract ProvideLiquidity is Test, Setup {
+contract ProvideLiquidityFirstTime is Test, Setup {
     function setUp() public {
         ammv1.faucet(10_000, 10_000);
+    }
+
+    function testRevertIfNoLiquidityTokenOne() public {
+        vm.expectRevert("validAmountCheck: amount cannot be 0");
+        ammv1.provideLiquidity(0, 10);
+    }
+
+    function testRevertIfNoLiquidityTokenTwo() public {
+        vm.expectRevert("validAmountCheck: amount cannot be 0");
+        ammv1.provideLiquidity(10, 0);
     }
 
     function testNewPool100Shares() public {
