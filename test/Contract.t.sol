@@ -36,11 +36,15 @@ contract Faucet is Test, Setup {
 }
 
 contract ProvideLiquidity is Test, Setup {
+    function setUp() public {
+        ammv1.faucet(10_000, 10_000);
+    }
+
     function testNewPool100Shares() public {
         uint256 totalPoolSharesBefore = ammv1.totalPoolShares();
         assertEq(totalPoolSharesBefore, 0);
         ammv1.provideLiquidity(10, 10);
         uint256 totalPoolSharesAfter = ammv1.totalPoolShares();
-        assertEq(totalPoolSharesAfter, 100);
+        assertEq(totalPoolSharesAfter, 100 * 1_000_000);
     }
 }
