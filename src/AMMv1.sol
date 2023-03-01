@@ -37,20 +37,20 @@ contract AMMv1 {
     //user must have enough balance
     modifier validAmountCheckTokenOne(uint256 _quantity) {
         require(_quantity > 0, "validAmountCheck: amount cannot be 0");
-        require(
-            tokenOneBalance[msg.sender] > _quantity,
-            "validAmountCheck: Invalid token one"
-        );
+        // require(
+        //     tokenOneBalance[msg.sender] > _quantity,
+        //     "validAmountCheck: Invalid token one"
+        // );
         _;
     }
 
     //user must have enough balance
     modifier validAmountCheckTokenTwo(uint256 _quantity) {
         require(_quantity > 0, "validAmountCheck: amount cannot be 0");
-        require(
-            tokenTwoBalance[msg.sender] > _quantity,
-            "validAmountCheck: Invalid token two"
-        );
+        // require(
+        //     tokenTwoBalance[msg.sender] > _quantity,
+        //     "validAmountCheck: Invalid token two"
+        // );
         _;
     }
 
