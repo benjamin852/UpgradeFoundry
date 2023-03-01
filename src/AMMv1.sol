@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-contract AMMV1 {
-    /*** STOAGE ***/
+contract AMMv1 {
+    /*** STORAGE ***/
 
     //total shares in pool
     uint256 public totalPoolShares;
