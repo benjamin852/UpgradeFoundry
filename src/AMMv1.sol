@@ -101,7 +101,9 @@ contract AMMv1 {
 
             if (shareOne != shareTwo) revert InvalidShares(shareOne, shareTwo);
             // require(shareOne == shareTwo, "AMMv1.provideLiquidity: ")
+            newShares = shareOne;
         }
+
         require(
             newShares > 0,
             "AMMv1.provideLiquidity: Insufficient assets provided"
