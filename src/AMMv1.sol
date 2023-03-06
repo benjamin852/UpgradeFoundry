@@ -152,6 +152,27 @@ contract AMMv1 {
         tokenTwoBalance[msg.sender] += withdrawAmountTokenTwo;
     }
 
+    /**
+     * @notice swap tokenOne in return for tokenTwo
+     * @param _amountTokenOne amount of tokenOne to swap in
+     * @return amountTokenTwo amount of tokenTwo we get in return
+     */
+    function swapTokenOne(
+        uint256 _amountTokenOne
+    )
+        external
+        activePool
+        validAmountCheckTokenOne(_amountTokenOne)
+        returns (uint256 amountTokenTwo)
+    {
+        uint256 amountTokenTwo = _getSwapTokenOneEstimate(_amountTokenOne);
+        tokenOneBalance[msg.sender] -= _amountTokenOne;
+        totalTokenOne += _amountTokenOne;
+        totalTokenTwo -= amountTokenTwo;
+
+        tokenTwoBalance[msg.sender] += amountTokenTwo;
+    }
+
     /*** HELPER FUNCTIONS ***/
 
     /**
@@ -196,5 +217,26 @@ contract AMMv1 {
         );
         withdrawAmountTokenOne = (_sharesToWithdraw * totalTokenOne) / totalPoolShares;
         withdrawAmountTokenTwo = (_sharesToWithdraw * totalTokenTwo) / totalPoolShares;
+    }
+
+    /**
+     * @notice Get amount of tokenTwo user receives when swapping tokenOne
+     * @param _amountTokenOne amount of tokenOne being swapped in
+     * @return amountTokenTwo amount of tokenTwo being returned
+     */
+    function _getSwapTokenOneEstimate(
+        uint256 _amountTokenOne
+    ) internal returns (uint256 amountTokenTwo) {
+        //add new tokenOne to total pool balance of tokenOne
+        uint256 tokenOneAfter = totalTokenOne + _amountTokenOne;
+
+        //caclculate howmany tokens will remain in pool after swap
+        uint256 tokenTwoAfter = k / tokenOneAfter;
+
+        //return correct amount to swapper
+        amountTokenTwo = totalTokenTwo - tokenTwoAfter;
+
+        // i think this will revert the pool if we hit 0 assetTwo in the pool
+        if (amountTokenTwo == totalTokenTwo) amountTokenTwo--;
     }
 }
