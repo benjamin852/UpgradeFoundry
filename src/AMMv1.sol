@@ -165,7 +165,7 @@ contract AMMv1 {
         validAmountCheckTokenOne(_amountTokenOne)
         returns (uint256 amountTokenTwo)
     {
-        uint256 amountTokenTwo = _getSwapTokenOneEstimate(_amountTokenOne);
+        amountTokenTwo = _getSwapTokenOneEstimate(_amountTokenOne);
         tokenOneBalance[msg.sender] -= _amountTokenOne;
         totalTokenOne += _amountTokenOne;
         totalTokenTwo -= amountTokenTwo;
