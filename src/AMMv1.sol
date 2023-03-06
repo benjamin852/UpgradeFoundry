@@ -173,6 +173,23 @@ contract AMMv1 {
         tokenTwoBalance[msg.sender] += amountTokenTwo;
     }
 
+    /**
+     * @notice amount of tokenTwo should swap to get amount of tokenOne in return
+     * @param _amountTokenTwo amount of token two to swap
+     * @return amountTokenOne amount of token one returned
+     */
+    function getSwapReceiveTokenOneEstimate(
+        uint256 _amountTokenTwo
+    ) public view activePool returns (uint256 amountTokenOne) {
+        require(
+            _amountTokenTwo < totalTokenTwo,
+            'AMMv1.getSwapReceiveTokenOneEstimate: Insufficient pool banace'
+        );
+        uint256 tokenTwoAfter = totalTokenTwo - _amountTokenTwo;
+        uint256 tokenOneAfter = k / tokenTwoAfter;
+        amountTokenOne = tokenOneAfter - totalTokenOne;
+    }
+
     /*** HELPER FUNCTIONS ***/
 
     /**
@@ -236,7 +253,7 @@ contract AMMv1 {
         //return correct amount to swapper
         amountTokenTwo = totalTokenTwo - tokenTwoAfter;
 
-        // i think this will revert the pool if we hit 0 assetTwo in the pool
+        // revert the pool if we hit 0 assetTwo in the pool
         if (amountTokenTwo == totalTokenTwo) amountTokenTwo--;
     }
 }
