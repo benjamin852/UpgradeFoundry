@@ -181,6 +181,28 @@ contract AMMv1 {
         tokenTwoBalance[msg.sender] += amountTokenTwo;
     }
 
+    /**
+     * @notice Swap tokenTwo for tokenOne
+     * @param _amountTokenTwo amount of tokenTwo to swap in
+     * @return amountTokenOne amount of tokenOne to get in return
+     */
+    function swapTokenTwo(
+        uint256 _amountTokenTwo
+    )
+        external
+        activePool
+        validAmountCheckTokenTwo(_amountTokenTwo)
+        returns (uint256 amountTokenOne)
+    {
+        amountTokenOne = _getSwapTokenTwoEstimate(_amountTokenTwo);
+
+        tokenTwoBalance[msg.sender] -= _amountTokenTwo;
+        totalTokenTwo += _amountTokenTwo;
+        totalTokenOne -= amountTokenOne;
+
+        tokenOneBalance[msg.sender] += amountTokenOne;
+    }
+
     /**** GETTER ****/
 
     /**
