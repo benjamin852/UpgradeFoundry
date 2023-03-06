@@ -54,7 +54,11 @@ contract AMMv1 {
         _;
     }
 
-    /*** FUNCTIONS ***/
+    /***************
+        FUNCTIONS 
+     ***************/
+
+    /*** LIQUIDITY ***/
 
     /**
      * @notice send free tokens to msg.sender
@@ -109,6 +113,8 @@ contract AMMv1 {
         shares[msg.sender] += newShares;
     }
 
+    /*** WITHDRAW ***/
+
     /**
      * @notice withdraw liquidity from pool and return tokenOne & tokenTwo to withdrawer
      * @param _shares amount of shares to withdaw
@@ -152,6 +158,8 @@ contract AMMv1 {
         tokenTwoBalance[msg.sender] += withdrawAmountTokenTwo;
     }
 
+    /*** SWAP ***/
+
     /**
      * @notice swap tokenOne in return for tokenTwo
      * @param _amountTokenOne amount of tokenOne to swap in
@@ -173,25 +181,46 @@ contract AMMv1 {
         tokenTwoBalance[msg.sender] += amountTokenTwo;
     }
 
+    /**** GETTER ****/
+
     /**
-     * @notice amount of tokenTwo should swap to get amount of tokenOne in return
+     * @notice amount of tokenOne needed to swap to receive a certain amount of tokenOne
      * @param _amountTokenTwo amount of token two to swap
      * @return amountTokenOne amount of token one returned
      */
     function getSwapReceiveTokenOneEstimate(
         uint256 _amountTokenTwo
-    ) public view activePool returns (uint256 amountTokenOne) {
+    ) external view activePool returns (uint256 amountTokenOne) {
         require(
             _amountTokenTwo < totalTokenTwo,
             'AMMv1.getSwapReceiveTokenOneEstimate: Insufficient pool banace'
         );
         uint256 tokenTwoAfter = totalTokenTwo - _amountTokenTwo;
-        uint256 tokenOneAfter = k / tokenTwoAfter;
-        amountTokenOne = tokenOneAfter - totalTokenOne;
+        uint256 relativeTokenOneAfter = k / tokenTwoAfter;
+        amountTokenOne = relativeTokenOneAfter - totalTokenOne;
     }
 
-    /*** HELPER FUNCTIONS ***/
+    /**
+     * @notice amount of tokenTwo needed to swap to receive a certain amount of tokenOne
+     * @param _amountTokenOne amount of tokenOne to swap
+     * @return amountTokenTwo amount of tokenTwo returned
+     */
+    function getSwapReceiveTokenTwoEstimate(
+        uint256 _amountTokenOne
+    ) external view activePool returns (uint256 amountTokenTwo) {
+        require(
+            _amountTokenOne < totalTokenOne,
+            'ammv1.getSwapReceiveTokenTwoEstimate: insufficient pool balance'
+        );
+        uint256 tokenOneAfter = totalTokenOne - _amountTokenOne;
+        uint256 relativeTokenTwoAfter = k / tokenOneAfter;
 
+        amountTokenTwo = relativeTokenTwoAfter - totalTokenOne;
+    }
+
+    /***************
+        HELPER 
+     ***************/
     /**
      * @notice amount of tokenOne required when providing tokenTwo liquidity
      * @param _amountTokenTwo amount of tokenTwo liquidity being provided
@@ -243,7 +272,7 @@ contract AMMv1 {
      */
     function _getSwapTokenOneEstimate(
         uint256 _amountTokenOne
-    ) internal returns (uint256 amountTokenTwo) {
+    ) internal view returns (uint256 amountTokenTwo) {
         //add new tokenOne to total pool balance of tokenOne
         uint256 tokenOneAfter = totalTokenOne + _amountTokenOne;
 
@@ -255,5 +284,22 @@ contract AMMv1 {
 
         // revert the pool if we hit 0 assetTwo in the pool
         if (amountTokenTwo == totalTokenTwo) amountTokenTwo--;
+    }
+
+    /**
+     * @notice Get amount of tokenOne user wil receive when swapping tokenTwo
+     * @param _amountTokenTwo amount of tokenTwo swapping away
+     * @return amountTokenOne amount of tokenOne received
+     */
+    function _getSwapTokenTwoEstimate(
+        uint256 _amountTokenTwo
+    ) internal view activePool returns (uint256 amountTokenOne) {
+        uint256 tokenTwoAfter = totalTokenTwo + _amountTokenTwo;
+        uint256 tokenOneAfter = k / tokenTwoAfter;
+
+        amountTokenOne = totalTokenOne - tokenOneAfter;
+
+        //Ensure tokenOne's pool is not empty
+        if (amountTokenOne == totalTokenOne) amountTokenOne--;
     }
 }
