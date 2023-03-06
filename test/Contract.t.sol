@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
+import 'forge-std/Test.sol';
 
-import "src/AMMv1.sol";
-import "./helper/Setup.sol";
+import 'src/AMMv1.sol';
+
+// import "./helper/Setup.sol";
 
 contract Initialization is Test, Setup {
     function setUp() public {
@@ -41,12 +42,12 @@ contract ProvideLiquidityFirstTime is Test, Setup {
     }
 
     function testRevertIfNoLiquidityTokenOne() public {
-        vm.expectRevert("validAmountCheck: amount cannot be 0");
+        vm.expectRevert('validAmountCheck: amount cannot be 0');
         ammv1.provideLiquidity(0, 10);
     }
 
     function testRevertIfNoLiquidityTokenTwo() public {
-        vm.expectRevert("validAmountCheck: amount cannot be 0");
+        vm.expectRevert('validAmountCheck: amount cannot be 0');
         ammv1.provideLiquidity(10, 0);
     }
 
@@ -132,4 +133,9 @@ contract ProvideLiquidity is Test, Setup {
         uint256 totalPoolSharesAfter = ammv1.totalPoolShares();
         assertEq(totalPoolSharesAfter, totalPoolSharesBefore * 2);
     }
+}
+
+contract Withdraw is Test, Setup {
+    //dont forget withdrawEstimate
+    // test each line in withdraw
 }

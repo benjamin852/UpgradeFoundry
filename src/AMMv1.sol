@@ -109,6 +109,46 @@ contract AMMv1 {
         shares[msg.sender] += newShares;
     }
 
+    /**
+     * @notice withdraw liquidity from pool and return tokenOne & tokenTwo to withdrawer
+     * @param _shares amount of shares to withdaw
+     * @return tokenOneAmount amount of tokenOne to receive
+     * @return tokenTwoAmount amount of tokenTwo to receive
+     */
+    function withdraw(
+        uint256 _shares
+    )
+        external
+        activePool
+        validAmountCheckTokenOne(_shares)
+        validAmountCheckTokenTwo(_shares)
+        returns (uint256 tokenOneAmount, uint256 tokenTwoAmount)
+    {
+        (uint256 withdrawAmountTokenOne, uint256 withdrawAmountTokenTwo) = _getWithdrawEstimate(
+            _shares
+        );
+
+        // subtract total shares from provider
+        shares[msg.sender] -= _shares;
+
+        // subtract total shares
+        totalPoolShares -= _shares;
+
+        // subtract totalTokenOne from pool
+        totalTokenOne -= withdrawAmountTokenOne;
+
+        // subtract totalTokenTwo from pool
+        totalTokenTwo -= withdrawAmountTokenTwo;
+
+        k = totalTokenOne * totalTokenTwo;
+
+        // increment withdrawer tokenOne balance
+        tokenOneBalance[msg.sender] += withdrawAmountTokenOne;
+
+        // increment withdraw tokenTwo balance
+        tokenTwoBalance[msg.sender] += withdrawAmountTokenTwo;
+    }
+
     /*** HELPER FUNCTIONS ***/
 
     /**
@@ -118,7 +158,7 @@ contract AMMv1 {
      */
     function _getEquivalentToken1Estimate(
         uint256 _amountTokenTwo
-    ) internal view activePool returns (uint256 reqTokenOne) {
+    ) internal view returns (uint256 reqTokenOne) {
         reqTokenOne = (totalTokenOne * _amountTokenTwo) / totalTokenTwo;
     }
 
@@ -136,17 +176,22 @@ contract AMMv1 {
     /**
      * @notice Return estimate of tokens to be withdrawn when pool shares a burned
      * @param _sharesToWithdraw amount of shares to withdraw
-     * @return amountTokenOne amount of token ones withdrawn
-     * @return amountTokenTwo amount of token twos withdrawn
+     * @return withdrawAmountTokenOne amount of token ones withdrawn
+     * @return withdrawAmountTokenTwo amount of token twos withdrawn
      */
     function _getWithdrawEstimate(
         uint256 _sharesToWithdraw
-    ) internal view activePool returns (uint256 amountTokenOne, uint256 amountTokenTwo) {
+    )
+        internal
+        view
+        activePool
+        returns (uint256 withdrawAmountTokenOne, uint256 withdrawAmountTokenTwo)
+    {
         require(
             _sharesToWithdraw <= totalPoolShares,
             'AMMv1.getWithdrawEstimate: attempting to burn too many shares'
         );
-        amountTokenOne = (_sharesToWithdraw * totalTokenOne) / totalPoolShares;
-        amountTokenTwo = (_sharesToWithdraw * totalTokenTwo) / totalPoolShares;
+        withdrawAmountTokenOne = (_sharesToWithdraw * totalTokenOne) / totalPoolShares;
+        withdrawAmountTokenTwo = (_sharesToWithdraw * totalTokenTwo) / totalPoolShares;
     }
 }
