@@ -5,7 +5,7 @@ import 'forge-std/Test.sol';
 
 import 'src/AMMv1.sol';
 
-// import "./helper/Setup.sol";
+import './helper/Setup.sol';
 
 contract Initialization is Test, Setup {
     function setUp() public {
@@ -136,6 +136,100 @@ contract ProvideLiquidity is Test, Setup {
 }
 
 contract Withdraw is Test, Setup {
-    //dont forget withdrawEstimate
-    // test each line in withdraw
+    uint256 public poolShares;
+
+    function setUp() public {
+        vm.prank(vm.addr(1));
+        ammv1.faucet(10 ether, 10 ether);
+        vm.prank(vm.addr(1));
+        ammv1.provideLiquidity(7 ether, 7 ether);
+        poolShares = ammv1.totalPoolShares();
+    }
+
+    // should revert if withdrawing invalid shares
+    function testRevertInvalidSharesToWithdraw() public {
+        vm.expectRevert('AMMv1.getWithdrawEstimate: attempting to burn too many shares');
+        ammv1.withdraw(100_000_001);
+    }
+
+    //reduce users shares
+    function testShouldReduceUsersShares() public {
+        uint256 sharesBefore = ammv1.shares(vm.addr(1));
+        vm.prank(vm.addr(1));
+        ammv1.withdraw(50);
+        uint256 sharesAfter = ammv1.shares(vm.addr(1));
+        assertEq(sharesAfter, sharesBefore - 50);
+    }
+
+    //reduce total pool shares
+    function testShouldReduceTotalPoolShares() public {
+        uint256 sharesBefore = ammv1.totalPoolShares();
+        vm.prank(vm.addr(1));
+        ammv1.withdraw(50);
+        uint256 sharesAfter = ammv1.totalPoolShares();
+        assertEq(sharesAfter, sharesBefore - 50);
+    }
+
+    //reduce correct tokenOne from pool
+    function testShouldReduceTotalTokenOneFromPool() public {
+        uint256 totalTokenOneBefore = ammv1.totalTokenOne();
+        uint256 expectedDifference = (50 * totalTokenOneBefore) / poolShares;
+        vm.prank(vm.addr(1));
+        ammv1.withdraw(50);
+        uint256 totalTokenOneAfter = ammv1.totalTokenOne();
+        assertEq(totalTokenOneAfter, totalTokenOneBefore - expectedDifference);
+    }
+
+    //reduce correct tokenTwo from pool
+    function testShouldReduceTotalTokenTwoFromPool() public {
+        uint256 totalTokenTwoBefore = ammv1.totalTokenTwo();
+        uint256 expectedDifference = (50 * totalTokenTwoBefore) / poolShares;
+        vm.prank(vm.addr(1));
+        ammv1.withdraw(50);
+        uint256 totalTokenTwoAfter = ammv1.totalTokenTwo();
+        assertEq(totalTokenTwoAfter, totalTokenTwoBefore - expectedDifference);
+    }
+
+    //should set correct k amount
+    function testShouldSetCorrectKAmount() public {
+        uint256 expectedTokenOneBefore = ammv1.totalTokenOne();
+        uint256 expectedTokenTwoBefore = ammv1.totalTokenTwo();
+        uint256 expectedKBefore = expectedTokenOneBefore * expectedTokenTwoBefore;
+        uint256 kBefore = ammv1.k();
+        assertEq(kBefore, expectedKBefore);
+        vm.prank(vm.addr(1));
+        ammv1.withdraw(50);
+        uint256 expectedTokenOne = ammv1.totalTokenOne();
+        uint256 expectedTokenTwo = ammv1.totalTokenTwo();
+        uint256 expectedK = expectedTokenOne * expectedTokenTwo;
+        uint256 kAfter = ammv1.k();
+        assertEq(kAfter, expectedK);
+        assertGt(kBefore, kAfter);
+    }
+
+    //should increase user's token one balance after withdraw
+    function testIncreaseUserTokenOneBalance() public {
+        uint256 userTokenBalanceBefore = ammv1.tokenOneBalance(vm.addr(1));
+        uint256 totalTokenOne = ammv1.totalTokenOne();
+        vm.prank(vm.addr(1));
+        ammv1.withdraw(50);
+        uint256 userTokenBalanceAfter = ammv1.tokenOneBalance(vm.addr(1));
+
+        uint256 expectedDifference = (50 * totalTokenOne) / poolShares;
+
+        assertEq(userTokenBalanceAfter, userTokenBalanceBefore + expectedDifference);
+    }
+
+    //should increase user's token two balance after withdraw
+    function testIncreaseUserTokenTwoBalance() public {
+        uint256 userTokenBalanceBefore = ammv1.tokenTwoBalance(vm.addr(1));
+        uint256 totalTokenTwo = ammv1.totalTokenTwo();
+        vm.prank(vm.addr(1));
+        ammv1.withdraw(50);
+        uint256 userTokenBalanceAfter = ammv1.tokenTwoBalance(vm.addr(1));
+
+        uint256 expectedDifference = (50 * totalTokenTwo) / poolShares;
+
+        assertEq(userTokenBalanceAfter, userTokenBalanceBefore + expectedDifference);
+    }
 }

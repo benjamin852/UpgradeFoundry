@@ -120,9 +120,12 @@ contract AMMv1 {
     )
         external
         activePool
-        validAmountCheckTokenOne(_shares)
-        validAmountCheckTokenTwo(_shares)
-        returns (uint256 tokenOneAmount, uint256 tokenTwoAmount)
+        returns (
+            //   validAmountCheckTokenOne(_shares)
+            //   validAmountCheckTokenTwo(_shares)
+            uint256 tokenOneAmount,
+            uint256 tokenTwoAmount
+        )
     {
         (uint256 withdrawAmountTokenOne, uint256 withdrawAmountTokenTwo) = _getWithdrawEstimate(
             _shares
