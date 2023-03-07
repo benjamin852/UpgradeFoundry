@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-contract AMMv1 {
+import 'openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol';
+
+contract AMMv1 is Initializable {
     /*** STORAGE ***/
 
     //total shares in pool
@@ -57,6 +59,11 @@ contract AMMv1 {
     /***************
         FUNCTIONS 
      ***************/
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     /*** LIQUIDITY ***/
 

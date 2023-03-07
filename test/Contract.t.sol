@@ -6,6 +6,8 @@ import 'forge-std/Test.sol';
 import 'src/AMMv1.sol';
 
 import './helper/Setup.sol';
+import 'openzeppelin-contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
+import 'openzeppelin-contracts/proxy/transparent/ProxyAdmin.sol';
 
 contract Initialization is Test, Setup {
     function setUp() public {
@@ -296,5 +298,25 @@ contract Swap is Test, Setup {
         uint256 expectedTokenTwoPayout = dexBalanceBefore - expectedDexBalance;
 
         assertEq(totalTokensAfter, totalTokensBefore + expectedTokenTwoPayout);
+    }
+}
+
+contract Upgradeability is Test, Setup {
+    ProxyAdmin public admin;
+    AMMv1 public ammV1Implementation;
+    AMMv1 public wrappedProxyV1;
+    TransparentUpgradeableProxy public proxy;
+
+    function setUp() public {
+        admin = new ProxyAdmin();
+
+        // get implementation
+        ammV1Implementation = new AMMv1();
+
+        // deploy proxy
+        proxy = new TransparentUpgradeableProxy(address(ammV1Implementation), address(admin), '');
+
+        // wrap ABI in proxy to make interactions with proxy simpler
+        wrappedProxyV1 = AMMv1(address(proxy));
     }
 }
