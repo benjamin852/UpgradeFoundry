@@ -233,3 +233,68 @@ contract Withdraw is Test, Setup {
         assertEq(userTokenBalanceAfter, userTokenBalanceBefore + expectedDifference);
     }
 }
+
+contract Swap is Test, Setup {
+    function setUp() public {
+        vm.prank(vm.addr(1));
+        ammv1.faucet(10 ether, 10 ether);
+        vm.prank(vm.addr(1));
+        ammv1.provideLiquidity(7 ether, 7 ether);
+    }
+
+    // should decrement user tokenOne supply
+    function testDeductTokenOneFromSender() public {
+        uint256 totalTokensBefore = ammv1.tokenOneBalance(vm.addr(1));
+        assertEq(totalTokensBefore, 10 ether - 7 ether);
+        vm.prank(vm.addr(1));
+        ammv1.swapTokenOne(1 ether);
+        uint256 totalTokensAfter = ammv1.tokenOneBalance(vm.addr(1));
+        assertEq(totalTokensAfter, totalTokensBefore - 1 ether);
+    }
+
+    // should increment dex tokenOne supply
+    function testIncrementTokenOneToDex() public {
+        uint256 dexBalanceBefore = ammv1.totalTokenOne();
+        assertEq(dexBalanceBefore, 7 ether);
+        vm.prank(vm.addr(1));
+        ammv1.swapTokenOne(1 ether);
+        uint256 dexBalanceAfter = ammv1.totalTokenOne();
+        assertEq(dexBalanceAfter, 7 ether + 1 ether);
+    }
+
+    // should decrement dex tokenTwo supply
+    function testDecrementDokenTwoFromDex() public {
+        uint256 dexBalanceBefore = ammv1.totalTokenTwo();
+        assertEq(dexBalanceBefore, 7 ether);
+        vm.prank(vm.addr(1));
+        ammv1.swapTokenOne(1 ether);
+
+        uint256 dexBalanceAfter = ammv1.totalTokenTwo();
+
+        uint256 k = ammv1.k();
+        uint256 expectedDexBalance = k / (dexBalanceBefore + 1 ether);
+
+        assertEq(dexBalanceAfter, expectedDexBalance);
+
+        // additional test option
+        // (amountTokenTwo) = _getSwapTokenOneEstimate(_amountTokenOne);
+        // assetEq(dexBalanceAfter, dexBalanceBefore - amountTokenTwo);
+    }
+
+    // should increment sender tokenTwo supply
+    function testShouldIncrementSenderTokenTwo() public {
+        uint256 dexBalanceBefore = ammv1.totalTokenTwo();
+        uint256 totalTokensBefore = ammv1.tokenTwoBalance(vm.addr(1));
+
+        assertEq(totalTokensBefore, 10 ether - 7 ether);
+        vm.prank(vm.addr(1));
+        ammv1.swapTokenOne(1 ether);
+        uint256 totalTokensAfter = ammv1.tokenTwoBalance(vm.addr(1));
+
+        uint256 k = ammv1.k();
+        uint256 expectedDexBalance = k / (dexBalanceBefore + 1 ether);
+        uint256 expectedTokenTwoPayout = dexBalanceBefore - expectedDexBalance;
+
+        assertEq(totalTokensAfter, totalTokensBefore + expectedTokenTwoPayout);
+    }
+}

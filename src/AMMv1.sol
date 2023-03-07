@@ -50,7 +50,7 @@ contract AMMv1 {
 
     //only can withdraw if liquidity added
     modifier activePool() {
-        require(totalPoolShares > 0, 'activePool: Zero liquidity');
+        require(totalPoolShares > 0, 'ammv1: Zero liquidity');
         _;
     }
 
