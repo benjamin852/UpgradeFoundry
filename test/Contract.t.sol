@@ -303,6 +303,7 @@ contract Swap is Test, Setup {
 }
 
 contract Upgradeability is Test, Setup {
+    bytes32 constant IMPL_SLOT = bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1);
     ProxyAdmin public admin;
     TransparentUpgradeableProxy public proxy;
     AMMv1 public ammV1Implementation;
@@ -329,8 +330,17 @@ contract Upgradeability is Test, Setup {
         // wrappedProxyV1.initialize(123)
     }
 
+    function testImplSlot() public {
+        bytes32 implAddrInStorage = vm.load(address(proxy), IMPL_SLOT);
+        assertEq(implAddrInStorage, bytes32(uint256(uint160(address(ammV1Implementation)))));
+    }
+
     function testUpgradesToV2() public {
         //upgrade proxy
+        vm.prank(vm.addr(3));
+        vm.expectRevert('Ownable: caller is not the owner');
+        admin.upgrade(proxy, address(ammv2Implementation));
+
         admin.upgrade(proxy, address(ammv2Implementation));
 
         //wrap proxy with new abi
@@ -339,5 +349,9 @@ contract Upgradeability is Test, Setup {
         assertEq(address(wrappedProxyV2), address(wrappedProxyV1));
 
         assertTrue(wrappedProxyV2.iamV2());
+
+        //extra confirmation via reading storage
+        bytes32 proxySlotAfter = vm.load(address(proxy), IMPL_SLOT);
+        assertEq(proxySlotAfter, bytes32(uint256(uint160(address(ammv2Implementation)))));
     }
 }
