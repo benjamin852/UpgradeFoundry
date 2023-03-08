@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import 'forge-std/Test.sol';
 
 import 'src/AMMv1.sol';
+import 'src/AMMv2.sol';
 
 import './helper/Setup.sol';
 import 'openzeppelin-contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
@@ -303,20 +304,40 @@ contract Swap is Test, Setup {
 
 contract Upgradeability is Test, Setup {
     ProxyAdmin public admin;
-    AMMv1 public ammV1Implementation;
-    AMMv1 public wrappedProxyV1;
     TransparentUpgradeableProxy public proxy;
+    AMMv1 public ammV1Implementation;
+    AMMv2 public ammv2Implementation;
+    AMMv1 public wrappedProxyV1;
+    AMMv2 public wrappedProxyV2;
 
     function setUp() public {
         admin = new ProxyAdmin();
 
-        // get implementation
+        // get implementation v1
         ammV1Implementation = new AMMv1();
+
+        // get implementation v2
+        ammv2Implementation = new AMMv2();
 
         // deploy proxy
         proxy = new TransparentUpgradeableProxy(address(ammV1Implementation), address(admin), '');
 
         // wrap ABI in proxy to make interactions with proxy simpler
         wrappedProxyV1 = AMMv1(address(proxy));
+
+        //if there was an init
+        // wrappedProxyV1.initialize(123)
+    }
+
+    function testUpgradesToV2() public {
+        //upgrade proxy
+        admin.upgrade(proxy, address(ammv2Implementation));
+
+        //wrap proxy with new abi
+        wrappedProxyV2 = AMMv2(address(proxy));
+
+        assertEq(address(wrappedProxyV2), address(wrappedProxyV1));
+
+        assertTrue(wrappedProxyV2.iamV2());
     }
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import 'openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol';
 
-contract AMMv1 is Initializable {
+contract AMMv2 is Initializable {
     /*** STORAGE ***/
 
     //total shares in pool
